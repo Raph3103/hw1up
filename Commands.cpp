@@ -79,9 +79,7 @@ void _removeBackgroundSign(char* cmd_line) {
 
 // TODO: Add your implementation for classes in Commands.h 
 
-SmallShell::SmallShell() {
-// TODO: add your implementation
-}
+
 
 SmallShell::~SmallShell() {
 // TODO: add your implementation
@@ -97,13 +95,16 @@ Command * SmallShell::CreateCommand(const char* cmd_line) {
   string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
 
   if (firstWord.compare("pwd") == 0) {
-    return new GetCurrDirCommand(cmd_line);
+    return new GetCurrDirCommand(cmd_line,path);
   }
   else if (firstWord.compare("showpid") == 0) {
     return new ShowPidCommand(cmd_line,pid);
   }
   else if (firstWord.compare("chprompt") == 0 ) {
       return new ChpromptCommand(cmd_line,&prompt);
+  }
+  else if (firstWord.compare("cd") == 0) {
+      return new ChangeDirCommand(cmd_line,previous_path,path);
   }
   else {
     return new ExternalCommand(cmd_line);
@@ -155,4 +156,48 @@ void ChpromptCommand::execute() {
 void ShowPidCommand::execute() {
 
     cout << "smash pid is " << pid;
+}
+
+void GetCurrDirCommand::execute() {
+
+    cout << path;
+}
+
+void ChangeDirCommand::execute() {
+
+    if (num_of_arguments > 2) {
+      printf("smash error: cd: too many arguments") ;
+        return;
+    }
+    if (num_of_arguments == 1) {
+        return;
+    }
+    std::string temp = args[1];
+
+    if (temp == ("-") ) {
+
+        if ( previous == nullptr) {
+
+            printf("smash error: cd: OLDPWD not set");
+            return;
+
+        }
+        std::string* temp = previous;
+        previous = current;                        // update the last pwd
+        const char* new_dir = temp->c_str();
+        int return_value = chdir(new_dir);                                // go to previous
+        if (return_value == -1){
+            printf("smash error: cd: change direction failed");
+        }
+        return;
+    }
+    else {                                 // argument different from -
+        previous = current;
+        const char* new_dir = args[1];
+        chdir(new_dir);
+        //replace if syscall macro
+        return;
+
+    }
+
 }

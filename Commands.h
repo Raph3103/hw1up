@@ -13,13 +13,28 @@ class Command {
 protected:
     int num_of_arguments;
     char* args[COMMAND_MAX_ARGS];
+    int Job_id;
  public:
   Command(const char* cmd_line);
   virtual ~Command();
   virtual void execute() = 0;
+  int getId() const{
+      return this->Job_id;
+  }
   //virtual void prepare();
   //virtual void cleanup();
   // TODO: Add your extra methods if needed
+
+
+};
+
+class compare_jobs {
+public:
+    bool operator()(Command* cmd1, Command* cmd2) {
+
+      return cmd2->getId() > cmd1->getId();
+
+    }
 };
 
 class BuiltInCommand : public Command {
@@ -63,14 +78,20 @@ public:
 
 class ChangeDirCommand : public BuiltInCommand {
 // TODO: Add your data members public:
-  ChangeDirCommand(const char* cmd_line, char** plastPwd);
+public:
+    std::string* previous;
+    std::string* current;
+
+  ChangeDirCommand(const char* cmd_line,std::string* previous_past,std::string* path)
+  :BuiltInCommand(cmd_line), previous(previous_past),current(path) {}
   virtual ~ChangeDirCommand() {}
   void execute() override;
 };
 
 class GetCurrDirCommand : public BuiltInCommand {
+    std::string* path;
  public:
-  GetCurrDirCommand(const char* cmd_line);
+  GetCurrDirCommand(const char* cmd_line, std::string* path_to_print) : BuiltInCommand(cmd_line), path(path_to_print){}
   virtual ~GetCurrDirCommand() {}
   void execute() override;
 };
@@ -99,6 +120,8 @@ class JobsList {
    // TODO: Add your data members
   };
  // TODO: Add your data members
+ std::vector<Command*,compare_jobs>
+
  public:
   JobsList();
   ~JobsList();
@@ -178,11 +201,16 @@ class SmallShell {
 public:
 
   // TODO: Add your data members
+
   std::string prompt;
   pid_t pid;
   std::string * path;
+  std::string* previous_path;
+  JobsList job_list;
   SmallShell() {
       pid  = getInstance().getpid();
+      path = getInstance().getcwd();
+      previous_path = nullptr;
   }
 
   Command *CreateCommand(const char* cmd_line);
