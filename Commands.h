@@ -2,6 +2,9 @@
 #define SMASH_COMMAND_H_
 
 #include <vector>
+#include <map>
+#include <iterator>
+using namespace std;
 
 #define COMMAND_ARGS_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
@@ -13,7 +16,9 @@ class Command {
 protected:
     int num_of_arguments;
     char* args[COMMAND_MAX_ARGS];
+    std::string* command_name;
     int Job_id;
+    bool finished;
  public:
   Command(const char* cmd_line);
   virtual ~Command();
@@ -21,6 +26,12 @@ protected:
   int getId() const{
       return this->Job_id;
   }
+  bool operator > ( const Command* cmd2) const {
+
+     return this->getId() > cmd2->getId();
+
+  }
+
   //virtual void prepare();
   //virtual void cleanup();
   // TODO: Add your extra methods if needed
@@ -28,14 +39,7 @@ protected:
 
 };
 
-class compare_jobs {
-public:
-    bool operator()(Command* cmd1, Command* cmd2) {
 
-      return cmd2->getId() > cmd1->getId();
-
-    }
-};
 
 class BuiltInCommand : public Command {
  public:
@@ -112,17 +116,35 @@ public:
   virtual ~QuitCommand() {}
   void execute() override;
 };
+class compare_jobs {
 
+public:
+
+    bool operator()(Command* cmd1, Command* cmd2) {
+
+        return cmd2->getId() > cmd1->getId();
+    }
+};
 
 class JobsList {
  public:
   class JobEntry {
    // TODO: Add your data members
+  public:
+      int Job_id;
+      Command* command
+      bool finished;
+      bool IsFinished()const {
+          return finished;
+      }
+      int blocked;
+
   };
  // TODO: Add your data members
- std::vector<Command*,compare_jobs>
+ std::map<int, JobEntry*> my_list;  /// int = id
 
  public:
+
   JobsList();
   ~JobsList();
   void addJob(Command* cmd, bool isStopped = false);
@@ -206,6 +228,7 @@ public:
   pid_t pid;
   std::string * path;
   std::string* previous_path;
+
   JobsList job_list;
   SmallShell() {
       pid  = getInstance().getpid();
@@ -226,5 +249,38 @@ public:
   void executeCommand(const char* cmd_line);
   // TODO: add extra methods as needed
 };
+
+
+/////////////////////////// jobs functions /////////////////////////////////////////
+
+
+void JobsList::removeFinishedJobs () {
+
+    std::map<int, JobEntry *>::iterator it;
+    for (it = my_list.begin(); it != my_list.end(); ++it) {
+        if (it->second->IsFinished() == true) {
+            my_list.erase(it);
+        }
+    }
+}
+
+
+void JobsList::printJobsList() {
+
+    this->removeFinishedJobs();
+    std::map<int, JobEntry *>::iterator it;
+    for (it = my_list.begin(); it != my_list.end(); ++it) {
+        if (it->second->blocked == true) {
+
+
+            cout << it->second->Job_id << it->second->command->
+        }
+    }
+
+}
+
+
+
+
 
 #endif //SMASH_COMMAND_H_
